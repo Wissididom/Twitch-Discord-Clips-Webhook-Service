@@ -2,10 +2,10 @@
 
 ## Prerequisites
 
-* NodeJS v18+
-* Discord Webhook URL
-* Twitch Client ID
-* Twitch Client Secret
+- NodeJS v18+
+- Discord Webhook URL
+- Twitch Client ID
+- Twitch Client Secret
 
 ## How to setup
 
