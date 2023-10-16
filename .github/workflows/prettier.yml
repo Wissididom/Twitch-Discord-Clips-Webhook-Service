@@ -16,4 +16,7 @@ jobs:
       - name: Prettier
         uses: actionsx/prettier@v3
         with:
-          args: --check .
+          args: --write .
+      - name: Show Diff
+        with:
+          args: git diff
