@@ -18,5 +18,4 @@ jobs:
         with:
           args: --write .
       - name: Show Diff
-        with:
-          args: git diff
+        run: git diff
