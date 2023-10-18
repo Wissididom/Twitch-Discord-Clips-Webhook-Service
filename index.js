@@ -43,7 +43,7 @@ const broadcasterId = broadcaster.data[0].id;
 const broadcasterDisplayName = broadcaster.data[0].display_name;
 let alreadyPostedIds = [];
 let messageClipMapping = {};
-console.log('Running setInterval - Clips should now be checked every second');
+console.log("Running setInterval - Clips should now be checked every second");
 setInterval(async () => {
   try {
     if (token.expires_at < new Date()) token = await getToken();
