@@ -43,6 +43,7 @@ const broadcasterId = broadcaster.data[0].id;
 const broadcasterDisplayName = broadcaster.data[0].display_name;
 let alreadyPostedIds = [];
 let messageClipMapping = {};
+console.log('Running setInterval - Clips should now be checked every second');
 setInterval(async () => {
   try {
     if (token.expires_at < new Date()) token = await getToken();
@@ -61,10 +62,10 @@ setInterval(async () => {
       return res.json();
     });
     clips = clips.data;
-    console.log(`${date.toISOString()} - ${JSON.stringify(clips)}`);
     let creatorIds = [];
     let videoIds = [];
     if (clips.length < 1) return; // No clips to post
+    console.log(`${date.toISOString()} - ${JSON.stringify(clips)}`);
     for (let i = 0; i < clips.length; i++) {
       creatorIds.push(clips[i].creator_id);
       if (clips[i].video_id.length > 0) {
