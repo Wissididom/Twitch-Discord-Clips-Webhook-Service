@@ -129,12 +129,13 @@ setInterval(async () => {
         // Don't post clips that were already posted. Edit them, because the Clip will get returned even if no title was set yet.
         if (clips[i].id in messageClipMapping) {
           if (messageClipMapping[clips[i].id].content != content) {
-            await webhookClient.editMessage(
+            let editedMessage = await webhookClient.editMessage(
               messageClipMapping[clips[i].id].id,
               {
                 content,
               },
             );
+            messageClipMapping[clips[i].id] = editedMessage;
           }
         }
         continue;
