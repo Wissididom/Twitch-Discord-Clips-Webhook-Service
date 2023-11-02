@@ -3,6 +3,8 @@ import * as DotEnv from "dotenv";
 
 DotEnv.config();
 
+const API_BASE_URL = "https://api.twitch.tv/helix";
+
 async function getToken() {
   return await fetch(
     `https://id.twitch.tv/oauth2/token?client_id=${process.env.TWITCH_CLIENT_ID}&client_secret=${process.env.TWITCH_CLIENT_SECRET}&grant_type=client_credentials`,
@@ -22,7 +24,7 @@ const webhookClient = new WebhookClient({
 
 let token = await getToken();
 const broadcaster = await fetch(
-  `https://api.twitch.tv/helix/users?login=${process.env.BROADCASTER_LOGIN}`,
+  `${API_BASE_URL}/users?login=${process.env.BROADCASTER_LOGIN}`,
   {
     headers: {
       "Client-ID": process.env.TWITCH_CLIENT_ID,
@@ -49,7 +51,7 @@ setInterval(async () => {
     if (token.expires_at < new Date()) token = await getToken();
     let date = new Date(Math.floor(Date.now() / 1000) * 1000 - 1000);
     let clips = await fetch(
-      `https://api.twitch.tv/helix/clips?broadcaster_id=${broadcasterId}&first=100&started_at=${date.toISOString()}`,
+      `${API_BASE_URL}/clips?broadcaster_id=${broadcasterId}&first=100&started_at=${date.toISOString()}`,
       {
         headers: {
           "Client-ID": process.env.TWITCH_CLIENT_ID,
@@ -78,7 +80,7 @@ setInterval(async () => {
     if (creatorIds.length > 0 && creatorIds.length <= 100) {
       usersQuery = "?id=" + creatorIds.join("&id=");
       profileImageUrls = (
-        await fetch(`https://api.twitch.tv/helix/users${usersQuery}`, {
+        await fetch(`${API_BASE_URL}/users${usersQuery}`, {
           headers: {
             "Client-ID": process.env.TWITCH_CLIENT_ID,
             Authorization: `Bearer ${token.access_token}`,
@@ -98,7 +100,7 @@ setInterval(async () => {
     if (videoIds.length > 0 && videoIds.length <= 100) {
       videosQuery = "?id=" + videoIds.join("&id=");
       videoTitles = (
-        await fetch(`https://api.twitch.tv/helix/videos${videosQuery}`, {
+        await fetch(`${API_BASE_URL}/videos${videosQuery}`, {
           headers: {
             "Client-ID": process.env.TWITCH_CLIENT_ID,
             Authorization: `Bearer ${token.access_token}`,
@@ -129,12 +131,13 @@ setInterval(async () => {
         // Don't post clips that were already posted. Edit them, because the Clip will get returned even if no title was set yet.
         if (clips[i].id in messageClipMapping) {
           if (messageClipMapping[clips[i].id].content != content) {
-            await webhookClient.editMessage(
+            let editedMessage = await webhookClient.editMessage(
               messageClipMapping[clips[i].id].id,
               {
                 content,
               },
             );
+            messageClipMapping[clips[i].id] = editedMessage;
           }
         }
         continue;
