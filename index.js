@@ -49,7 +49,7 @@ console.log("Running setInterval - Clips should now be checked every second");
 setInterval(async () => {
   try {
     if (token.expires_at < new Date()) token = await getToken();
-    let date = new Date(Math.floor(Date.now() / 1000) * 1000 - 1000);
+    let date = new Date(Math.floor(Date.now() / 1000) * 1000 - 5 * 60000);
     let clips = await fetch(
       `${API_BASE_URL}/clips?broadcaster_id=${broadcasterId}&first=100&started_at=${date.toISOString()}`,
       {
