@@ -1,7 +1,5 @@
 import { WebhookClient } from "discord.js";
-import * as DotEnv from "dotenv";
-
-DotEnv.config();
+import "dotenv/config";
 
 const API_BASE_URL = "https://api.twitch.tv/helix";
 
