@@ -31,7 +31,7 @@ async function webhookSend(options) {
     return null;
   }
   await new Promise((resolve) =>
-    setTimeout(resolve, (rateLimitResetAfter + 1) /*Safety precaution*/ * 1000),
+    setTimeout(resolve, (rateLimitResetAfter + 1) * 1000),
   );
   sendRetries++;
   return webhookSend(options);
@@ -64,7 +64,7 @@ async function webhookEdit(msgId, options) {
     return null;
   }
   await new Promise((resolve) =>
-    setTimeout(resolve, (rateLimitResetAfter + 1) /*Safety precaution*/ * 1000),
+    setTimeout(resolve, (rateLimitResetAfter + 1) * 1000),
   );
   editRetries++;
   return webhookEdit(msgId, options);
