@@ -1,7 +1,74 @@
-import { WebhookClient } from "discord.js";
 import "dotenv/config";
 
 const API_BASE_URL = "https://api.twitch.tv/helix";
+
+let rateLimitRemaining = null;
+let rateLimitResetAfter = null;
+let sendRetries = 0;
+let editRetries = 0;
+
+// https://discord.com/developers/docs/resources/webhook#execute-webhook
+async function webhookSend(options) {
+  let res = await fetch(`${process.env.DISCORD_WEBHOOK_URL}?wait=true`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(options),
+  });
+  const json =
+    res.headers.get("content-type") &&
+    res.headers.get("content-type").startsWith("application/json");
+  rateLimitRemaining = Number(res.headers.get("x-ratelimit-remaining"));
+  rateLimitResetAfter = Number(res.headers.get("x-ratelimit-reset-after"));
+  if (rateLimitRemaining > 0 && res.ok) {
+    if (json) return await res.json();
+    return await res.buffer();
+  }
+  if (sendRetries > 2) {
+    // Retry Count exceeded
+    sendRetries = 0;
+    return null;
+  }
+  await new Promise((resolve) =>
+    setTimeout(resolve, (rateLimitResetAfter + 1) /*Safety precaution*/ * 1000),
+  );
+  sendRetries++;
+  return webhookSend(options);
+}
+
+// https://discord.com/developers/docs/resources/webhook#edit-webhook-message
+async function webhookEdit(msgId, options) {
+  let res = await fetch(
+    `${process.env.DISCORD_WEBHOOK_URL}/messages/${msgId}`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(options),
+    },
+  );
+  const json =
+    res.headers.get("content-type") &&
+    res.headers.get("content-type").startsWith("application/json");
+  rateLimitRemaining = Number(res.headers.get("x-ratelimit-remaining"));
+  rateLimitResetAfter = Number(res.headers.get("x-ratelimit-reset-after"));
+  if (rateLimitRemaining > 0 && res.ok) {
+    if (json) return await res.json();
+    return await res.buffer();
+  }
+  if (editRetries > 2) {
+    // Retry Count exceeded
+    editRetries = 0;
+    return null;
+  }
+  await new Promise((resolve) =>
+    setTimeout(resolve, (rateLimitResetAfter + 1) /*Safety precaution*/ * 1000),
+  );
+  editRetries++;
+  return webhookEdit(msgId, options);
+}
 
 async function getToken() {
   return await fetch(
@@ -15,10 +82,6 @@ async function getToken() {
     return result;
   });
 }
-
-const webhookClient = new WebhookClient({
-  url: process.env.DISCORD_WEBHOOK_URL,
-});
 
 let token = await getToken();
 const broadcaster = await fetch(
@@ -131,7 +194,7 @@ setInterval(async () => {
         // Don't post clips that were already posted. Edit them, because the Clip will get returned even if no title was set yet.
         if (clips[i].id in messageClipMapping) {
           if (messageClipMapping[clips[i].id].content != content) {
-            let editedMessage = await webhookClient.editMessage(
+            let editedMessage = await webhookEdit(
               messageClipMapping[clips[i].id].id,
               {
                 content,
@@ -142,14 +205,12 @@ setInterval(async () => {
         }
         continue;
       }
-      let webhookMessage = await webhookClient
-        .send({
-          username: clips[i].creator_name.trim(),
-          avatarURL: profileImageUrls.find((x) => x.id == clips[i].creator_id)
-            ?.profileImageUrl,
-          content,
-        })
-        .catch((err) => console.error);
+      let webhookMessage = await webhookSend({
+        username: clips[i].creator_name.trim(),
+        avatar_url: profileImageUrls.find((x) => x.id == clips[i].creator_id)
+          ?.profileImageUrl,
+        content,
+      }).catch((err) => console.error);
       alreadyPostedIds.push(clips[i].id);
       messageClipMapping[clips[i].id] = webhookMessage;
     }
