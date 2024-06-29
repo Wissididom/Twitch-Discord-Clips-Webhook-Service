@@ -200,6 +200,7 @@ setInterval(async () => {
                 content,
               },
             );
+            if (!editedMessage) continue;
             messageClipMapping[clips[i].id] = editedMessage;
           }
         }
@@ -211,6 +212,7 @@ setInterval(async () => {
           ?.profileImageUrl,
         content,
       }).catch((err) => console.error);
+      if (!webhookMessage) continue;
       alreadyPostedIds.push(clips[i].id);
       messageClipMapping[clips[i].id] = webhookMessage;
     }
