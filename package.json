@@ -1,5 +1,5 @@
 {
-  "name": "twitch-discord-clips-webhook",
+  "name": "twitch-discord-clips-webhook-service",
   "type": "module",
   "version": "1.0.0",
   "description": "",
