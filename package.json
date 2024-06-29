@@ -1,5 +1,5 @@
 {
-  "name": "twitch-discord-clips-webhook",
+  "name": "twitch-discord-clips-webhook-service",
   "type": "module",
   "version": "1.0.0",
   "description": "",
@@ -13,7 +13,6 @@
   "author": "Wissididom",
   "license": "MIT",
   "dependencies": {
-    "discord.js": "^14.15.3",
     "dotenv": "^16.4.5"
   },
   "devDependencies": {
