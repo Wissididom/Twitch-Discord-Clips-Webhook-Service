@@ -1,4 +1,4 @@
-import { WebhookClient } from "discord.js";
+import { WebhookClient, EmbedBuilder } from "discord.js";
 import "dotenv/config";
 
 const API_BASE_URL = "https://api.twitch.tv/helix";
@@ -66,6 +66,7 @@ setInterval(async () => {
     clips = clips.data;
     let creatorIds = [];
     let videoIds = [];
+    let gameIds = [];
     if (clips.length < 1) return; // No clips to post
     console.log(`${date.toISOString()} - ${JSON.stringify(clips)}`);
     for (let i = 0; i < clips.length; i++) {
@@ -73,8 +74,13 @@ setInterval(async () => {
       if (clips[i].video_id.length > 0) {
         videoIds.push(clips[i].video_id);
       }
+      if (clips[i].game_id.length > 0) {
+        gameIds.push(clips[i].game_id);
+      }
     }
     creatorIds = [...new Set(creatorIds)]; // Remove duplicate entries
+    videoIds = [...new Set(videoIds)]; // Remove duplicate entries
+    gameIds = [...new Set(gameIds)]; // Remove duplicate entries
     let usersQuery;
     let profileImageUrls = [];
     if (creatorIds.length > 0 && creatorIds.length <= 100) {
@@ -117,6 +123,31 @@ setInterval(async () => {
     } else if (videoIds.length > 100) {
       console.error("More than 100 videos to look up");
     }
+    let gamesQuery;
+    let gameNames = [];
+    if (gameIds.length > 0 && gameIds.length <= 100) {
+      gamesQuery = "?id=" + gameIds.join("&id=");
+      gameNames = (
+        await fetch(`${API_BASE_URL}/games${gamesQuery}`, {
+          headers: {
+            "Client-ID": process.env.TWITCH_CLIENT_ID,
+            Authorization: `Bearer ${token.access_token}`,
+          },
+        })
+          .then((res) => res.json())
+          .catch((err) => console.error(err))
+      ).data.map((x) => {
+        return {
+          id: x.id,
+          name: x.name,
+          boxart: x.box_art_url
+            .replace("{width}", "600")
+            .replace("{height}", "800"),
+        };
+      });
+    } else if (gameIds.length > 100) {
+      console.error("More than 100 games to look up");
+    }
     for (let i = 0; i < clips.length; i++) {
       if (process.env.SUPPRESS_UNTITLED == "true") {
         let video = videoTitles.find((x) => x.id == clips[i].video_id);
@@ -148,6 +179,86 @@ setInterval(async () => {
           avatarURL: profileImageUrls.find((x) => x.id == clips[i].creator_id)
             ?.profileImageUrl,
           content,
+          embeds: [
+            new EmbedBuilder()
+              .setDescription(`[${clips[i].title.trim()}](${clips[i].url})`)
+              .addFields(
+                {
+                  name: "Game",
+                  value: clips[i].game_id
+                    ? gameNames.find((x) => x.id == clips[i].game_id)?.name
+                    : "N/A",
+                  inline: true,
+                },
+                {
+                  name: "Streamer",
+                  value: clips[i].broadcaster_name
+                    ? clips[i].broadcaster_name
+                    : "N/A",
+                  inline: true,
+                },
+                {
+                  name: "Clipper",
+                  value: clips[i].creator_name ? clips[i].creator_name : "N/A",
+                  inline: true,
+                },
+                {
+                  name: "VOD",
+                  value: clips[i].video_id
+                    ? `[${clips[i].video_id}](https://www.twitch.tv/videos/${clips[i].video_id})`
+                    : "N/A",
+                  inline: true,
+                },
+                {
+                  name: "Language",
+                  value: clips[i].language ? clips[i].language : "N/A",
+                  inline: true,
+                },
+                {
+                  name: "Views",
+                  value: clips[i].view_count
+                    ? clips[i].view_count.toString()
+                    : "N/A",
+                  inline: true,
+                },
+                {
+                  name: "Created At",
+                  value: clips[i].created_at
+                    ? `<t:${new Date(clips[i].created_at).getTime() / 1000}:F>`
+                    : "N/A",
+                  inline: true,
+                },
+                {
+                  name: "Duration",
+                  value: clips[i].duration
+                    ? `${clips[i].duration} seconds`
+                    : "N/A",
+                  inline: true,
+                },
+                {
+                  name: "VOD Offset",
+                  value: clips[i].vod_offset
+                    ? `${clips[i].vod_offset} seconds`
+                    : "N/A",
+                  inline: true,
+                },
+                {
+                  name: "Featured",
+                  value:
+                    clips[i].is_featured === false ||
+                    clips[i].is_featured === true
+                      ? clips[i].is_featured.toString()
+                      : "N/A",
+                  inline: true,
+                },
+              )
+              .setThumbnail(
+                clips[i].game_id
+                  ? gameNames.find((x) => x.id == clips[i].game_id)?.boxart
+                  : undefined,
+              )
+              .setImage(clips[i].thumbnail_url),
+          ],
         })
         .catch((err) => console.error);
       alreadyPostedIds.push(clips[i].id);
