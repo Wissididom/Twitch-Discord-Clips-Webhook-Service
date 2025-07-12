@@ -4,6 +4,8 @@
 
 This repository is archived because I added the feature in https://github.com/Wissididom/Twitch-Discord-Clips-Webhook and with that I don't want to maintain 2 things that essentially do the same thing.
 
+To do that in the other repository just set the `cron` option in the config to `null` and it'll poll every 5 minutes and should make sure there are no duplicate postings, even though I haven't really thoroughly tested the de-duplication.
+
 ## Prerequisites
 
 - NodeJS
