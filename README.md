@@ -1,5 +1,9 @@
 # Twitch-Discord-Clips-Webhook-Service
 
+## Archived
+
+This repository is archived because I added the feature in https://github.com/Wissididom/Twitch-Discord-Clips-Webhook and with that I don't want to maintain 2 things that essentially do the same thing.
+
 ## Prerequisites
 
 - NodeJS
